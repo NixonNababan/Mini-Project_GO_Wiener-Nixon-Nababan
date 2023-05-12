@@ -4,6 +4,8 @@ import (
 	"mini-project/lib/database"
 	"mini-project/models"
 	"mini-project/models/payload"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetUser(id uint) (payload.GetUser, error) {
@@ -20,10 +22,14 @@ func GetUser(id uint) (payload.GetUser, error) {
 }
 
 func UpdateUser(id uint, req *payload.UpdateUser) error {
+	password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	user := models.User{
 		Name:     req.Name,
 		Username: req.Username,
-		Password: req.Password,
+		Password: string(password),
 	}
 	if err := database.UpdateUser(&user, id); err != nil {
 		return err
