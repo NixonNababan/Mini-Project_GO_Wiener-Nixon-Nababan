@@ -3,6 +3,9 @@ package usecase
 import (
 	"mini-project/lib/database"
 	"mini-project/models/payload"
+	"net/http"
+
+	"github.com/labstack/echo"
 )
 
 func GetTasks() (resp []payload.GetTask, err error) {
@@ -66,10 +69,25 @@ func CreateTask(id uint, req *payload.CreateTask) error {
 	return nil
 }
 
-func UpdateTask(req *payload.CreateTask, id uint) error {
-	if _, err := database.GetTask(id); err != nil {
+func UpdateTask(req *payload.CreateTask, id uint, userId uint) error {
+	task, err := database.GetTask(id)
+	if err != nil {
 		return err
 	}
+
+	if userId != task.UserID {
+		for _, value := range task.Collaborators {
+			if value.UserID == userId {
+				err = nil
+				break
+			}
+			err = echo.NewHTTPError(http.StatusUnauthorized, "you are prohibited")
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	if err := database.UpdateTask(req, id); err != nil {
 		return err
 	}
@@ -93,9 +111,13 @@ func UpdateTaskStatus(id uint) error {
 	return nil
 }
 
-func DeleteTask(id uint) error {
-	if _, err := database.GetTask(id); err != nil {
+func DeleteTask(id uint, userId uint) error {
+	task, err := database.GetTask(id)
+	if err != nil {
 		return err
+	}
+	if task.UserID != userId {
+		return echo.NewHTTPError(http.StatusUnauthorized, "your are prohibited")
 	}
 	if err := database.DeleteTask(id); err != nil {
 		return err

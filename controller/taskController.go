@@ -52,11 +52,12 @@ func CreateTaskController(c echo.Context) error {
 func UpdateTaskController(c echo.Context) error {
 	var req payload.CreateTask
 	id, _ := strconv.Atoi(c.Param("id"))
+	userId := GetUserId(c)
 	c.Bind(&req)
 	if err := c.Validate(req); err != nil {
 		return err
 	}
-	err := usecase.UpdateTask(&req, uint(id))
+	err := usecase.UpdateTask(&req, uint(id), userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -77,7 +78,8 @@ func UpdateTaskStatusController(c echo.Context) error {
 
 func DeleteTaskController(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	err := usecase.DeleteTask(uint(id))
+	userId := GetUserId(c)
+	err := usecase.DeleteTask(uint(id), userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
